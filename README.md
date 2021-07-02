@@ -1,5 +1,5 @@
-# geekbrains math libs homework
+# leetcode solutions
 
-This is my repo for math libs homework
+https://leetcode.com/
 
 # You awesome!
