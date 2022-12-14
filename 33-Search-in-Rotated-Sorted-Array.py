@@ -33,7 +33,7 @@ class Solution:
                     left = br
                 else:
                     right = br
-                if right - left == 1:
+                if right - left <= 1:
                     br = right
                     break
 
