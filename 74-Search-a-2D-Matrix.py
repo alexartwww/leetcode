@@ -1,43 +1,61 @@
+# Условие задачи (на русском):
+# Дана матрица m x n, где:
+# 1. Каждая строка отсортирована по возрастанию.
+# 2. Первое число каждой строки больше последнего числа предыдущей.
+# Нужно найти число 'target' за время O(log(m * n)).
+#
+# Суть: Благодаря условию, матрицу можно рассматривать как один плоский
+# отсортированный массив длиной (m * n).
+#
+# -----------------------------------------------------------------------------
+# Алгоритм решения: Бинарный поиск по "виртуальному" массиву
+#
+# Идея: Мы ведем поиск так, будто это обычный массив, а когда нам нужно
+# получить значение, мы пересчитываем "плоский" индекс в координаты матрицы.
+#
+# 1. Параметры:
+#    - ROWS = количество строк, COLS = количество столбцов.
+#    - Левая граница (left) = 0.
+#    - Правая граница (right) = (ROWS * COLS) - 1.
+#
+# 2. Формулы перевода индекса:
+#    Если у нас есть индекс 'mid' в плоском массиве, то в матрице это:
+#    - Строка: row = mid // COLS (целочисленное деление)
+#    - Столбец: col = mid % COLS (остаток от деления)
+#
+# 3. Бинарный поиск:
+#    - Пока left <= right:
+#      - Находим середину: mid = (left + right) // 2.
+#      - Получаем значение: matrix[mid // COLS][mid % COLS].
+#      - Если это target -> True.
+#      - Если значение меньше target -> двигаем left вправо.
+#      - Если значение больше target -> двигаем right влево.
+
 import time
 
 
-class Solution:
+class Solution(object):
     def searchMatrix(self, matrix, target):
-        if len(matrix) == 0 or len(matrix[0]) == 0 or target < matrix[0][0] or target > matrix[-1][-1]:
-            return False
-        row = 0
-        left = 0
-        right = len(matrix) - 1
-
-        while True:
-            if left >= right:
-                row = left
-                break
-            if left > 0 and target > matrix[left - 1][-1] and target < matrix[left][0]:
-                return False
-            if right < len(matrix) - 1 and target > matrix[right - 1][-1] and target < matrix[right][0]:
-                return False
-            if target > matrix[left][-1]:
-                left = left + 1
-            if target < matrix[right][0]:
-                right = right - 1
-
-        if len(matrix[row]) == 0:
+        if not matrix or not matrix[0]:
             return False
 
-        column = 0
-        left = 0
-        right = len(matrix[row]) - 1
+        ROWS = len(matrix)
+        COLS = len(matrix[0])
 
-        while True:
-            if target == matrix[row][left] or target == matrix[row][right]:
+        left = 0
+        right = ROWS * COLS - 1
+
+        while left <= right:
+            mid = (left + right) // 2
+            # Перевод плоского индекса в 2D координаты
+            mid_val = matrix[mid // COLS][mid % COLS]
+
+            if mid_val == target:
                 return True
-            if left >= right:
-                break
-            if target > matrix[row][left]:
-                left = left + 1
-            if target < matrix[row][right]:
-                right = right - 1
+            elif mid_val < target:
+                left = mid + 1
+            else:
+                right = mid - 1
 
         return False
 

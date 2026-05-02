@@ -1,109 +1,70 @@
+# Алгоритм решения: Скользящее окно фиксированного размера + Словари частот
+#
+# Суть: Анаграмма — это слово, в котором те же буквы в том же количестве.
+# Значит, нам нужно найти в строке 's' все окна длиной как 'p',
+# состав которых (частота букв) полностью совпадает с составом 'p'.
+#
+# 1. Инициализация:
+#    - Создаем два словаря (или массива на 26 элементов) для подсчета букв:
+#      p_count (эталон из строки p) и s_count (текущее окно в s).
+#    - Наполняем p_count и самое первое окно s_count (длиной len(p)).
+#
+# 2. Первое сравнение:
+#    - Если p_count == s_count, значит первое окно — анаграмма. Добавляем индекс 0.
+#
+# 3. Скольжение окна (от len(p) до конца s):
+#    - Добавляем в s_count новый символ (справа).
+#    - Удаляем из s_count старый символ (тот, что остался слева).
+#      Важно: если счетчик символа стал 0, удаляем ключ из словаря, чтобы
+#      сравнение словарей p_count == s_count работало корректно.
+#    - Если после сдвига словари равны — добавляем индекс начала окна в результат.
+#
+# Пример: s = "cbaebabacd", p = "abc"
+#
+# - p_count = {'a':1, 'b':1, 'c':1}. Длина окна = 3.
+# - Окно 1: "cba". s_count = {'c':1, 'b':1, 'a':1}. Равны! Индекс 0 в результат.
+# - Сдвиг: Добавляем 'e', убираем 'c'. Окно "bae". Не равно p_count.
+# - Сдвиг: Добавляем 'b', убираем 'b'. Окно "aeb". Не равно.
+# ...
+# - Доходим до окна "bac": s_count снова {'b':1, 'a':1, 'c':1}. Равны! Индекс 6.
+
 import time
 from collections import Counter
 
 
-class Solution1:
+class Solution:
     def findAnagrams(self, s, p):
-        if len(p) > len(s):
-            return []
-        result = []
-        countp = Counter(list(p))
+        if len(p) > len(s): return []
 
-        for i in range(len(s) - len(p) + 1):
-            counts = Counter(list(s[i:i+len(p)]))
-            flag = True
-            for letter, num in counts.items():
-                if letter not in countp:
-                    flag = False
-                    break
-                if num > countp[letter]:
-                    flag = False
-                    break
-            if flag:
-                result.append(i)
-        return result
+        p_count, s_count = {}, {}
+        # Заполняем словари для первого окна
+        for i in range(len(p)):
+            p_count[p[i]] = p_count.get(p[i], 0) + 1
+            s_count[s[i]] = s_count.get(s[i], 0) + 1
 
+        res = [0] if p_count == s_count else []
 
-class Solution2:
-    def findAnagrams(self, s, p):
-        result = []
-        p = sorted(p)
+        left = 0
+        # Начинаем двигать окно
+        for right in range(len(p), len(s)):
+            # Добавляем символ справа
+            s_count[s[right]] = s_count.get(s[right], 0) + 1
+            # Убираем символ слева
+            s_count[s[left]] -= 1
+            if s_count[s[left]] == 0:
+                del s_count[s[left]]
 
-        for i in range(len(s) - len(p) + 1):
-            if sorted(s[i:i + len(p)]) == p:
-                result.append(i)
-        return result
+            left += 1
 
-class Solution3:
-    def findAnagrams(self, a, b):
-        if len(b) > len(a):  # If len of b is more than len of a, then there could be no anagram of b in a
-            return []
+            # Сравниваем состав текущего окна с эталоном
+            if s_count == p_count:
+                res.append(left)
 
-        count_a = {}  # Hash map for count of a
-        count_b = {}  # Hash map for count of b
-
-        for i in range(len(b)):  # Storing frequency of characters for length of b
-            count_a[a[i]] += 1
-            count_b[b[i]] += 1
-
-        if count_a == count_b:  # A specific case where we add the first index if matched
-            ans = [0]
-        else:
-            ans = []
-
-        sliding_left = 0  # We declare the sliding window pointer
-        for right in range(len(b), len(a)):
-            count_a[a[right]] += 1
-            count_a[a[sliding_left]] -= 1
-
-            if count_a[a[sliding_left]] == 0:
-                count_a.pop(a[sliding_left])
-
-            sliding_left = sliding_left + 1
-            if count_a == count_b:
-                ans.append(
-                    sliding_left)  # If all the characters from b with their respective frequency are found at this index, we append.
-
-        return ans
-
-class Solution4:
-    def findAnagrams(self, s, p):
-        alphabet = set(s) | set(p)
-        bitmap = {letter: 1 << i * 26 for i, letter in enumerate(alphabet)}
-
-        result = []
-        hashP = sum(bitmap[letter] for letter in p)
-        for i in range(len(s) - len(p) + 1):
-            hash = sum(bitmap[letter] for letter in s[i:i+len(p)])
-            if hashP - hash == 0:
-                result.append(i)
-
-        return result
-
-
-class Solution5:
-    def findAnagrams(self, s, p):
-        all_letters = set(s) | set(p)
-        bitmap = {letter: 1 << i for i, letter in enumerate(all_letters)}
-
-        hash0 = sum(bitmap[letter] for letter in s[:len(p)])
-        current = hash0 - sum(bitmap[letter] for letter in p)
-        result = []
-        if current == 0:
-            result.append(0)
-
-        for i in range(len(s) - len(p)):
-            letter_out = s[i]
-            letter_in = s[i + len(p)]
-            current = current + bitmap[letter_in] - bitmap[letter_out]
-            if current == 0:
-                result.append(i + 1)
-
-        return result
+        return res
 
 
 if __name__ == '__main__':
-    solution = Solution5()
+    solution = Solution()
 
     start = time.time()
     result = solution.findAnagrams("abcdcab", "ca")

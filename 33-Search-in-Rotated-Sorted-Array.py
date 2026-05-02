@@ -1,64 +1,59 @@
+# Условие задачи (на русском):
+# Дан массив, который был отсортирован по возрастанию, а затем "развернут" (rotated)
+# в какой-то точке. Все значения в массиве уникальны.
+# Нужно найти индекс числа 'target'. Если его нет — вернуть -1.
+# Время работы должно быть строго O(log n).
+#
+# Пример: [0,1,2,4,5,6,7] -> поворот на 3 позиции -> [4,5,6,7,0,1,2]
+# Ищем target = 0. Ответ: индекс 4.
+#
+# -----------------------------------------------------------------------------
+# Алгоритм решения: Модифицированный бинарный поиск
+#
+# Идея: В любом месте, где бы мы ни разделили такой массив пополам,
+# ОДНА ИЗ ПОЛОВИН всегда будет идеально отсортирована.
+#
+# 1. Находим середину (mid).
+# 2. Определяем, какая часть отсортирована:
+#    - Если nums[left] <= nums[mid], то ЛЕВАЯ часть отсортирована.
+#    - Иначе ПРАВАЯ часть отсортирована.
+#
+# 3. Проверяем, находится ли 'target' внутри отсортированной части:
+#    - Если в левой (и target там): сужаем поиск до левой (right = mid - 1).
+#    - Иначе идем в правую.
+#    - (Аналогично для правой стороны).
+#
+# 4. Если нашли nums[mid] == target, возвращаем индекс.
+
 import time
 
 
 class Solution:
     def search(self, nums, target):
-        if len(nums) == 0 \
-                or len(nums) == 1 and nums[0] != target \
-                or len(nums) == 2 and nums[0] != target and nums[1] != target \
-                or len(nums) == 3 and nums[0] != target and nums[1] != target and nums[2] != target \
-                :
-            return -1
-        elif len(nums) == 1 and nums[0] == target:
-            return 0
-        elif len(nums) == 2 and nums[0] == target:
-            return 0
-        elif len(nums) == 2 and nums[1] == target:
-            return 1
-        elif len(nums) == 3 and nums[0] == target:
-            return 0
-        elif len(nums) == 3 and nums[1] == target:
-            return 1
-        elif len(nums) == 3 and nums[2] == target:
-            return 2
+        left, right = 0, len(nums) - 1
 
-        br = 0
-        left = 0
-        right = len(nums) - 1
+        while left <= right:
+            mid = (left + right) // 2
 
-        if nums[left] > nums[right]:
-            while True:
-                br = left + ((right - left) // 2)
-                if nums[br] > nums[right]:
-                    left = br
+            if nums[mid] == target:
+                return mid
+
+            # Шаг 1: Проверяем, отсортирована ли левая часть
+            if nums[left] <= nums[mid]:
+                # Шаг 2: Если target находится в диапазоне левой части
+                if nums[left] <= target < nums[mid]:
+                    right = mid - 1
                 else:
-                    right = br
-                if right - left <= 1:
-                    br = right
-                    break
+                    left = mid + 1
 
-        if br == 0:
-            left = 0
-            right = len(nums) - 1
-        elif target >= nums[0] and target <= nums[br - 1]:
-            left = 0
-            right = br - 1
-        else:
-            left = br
-            right = len(nums) - 1
-
-        while True:
-            if nums[left] == target:
-                return left
-            if nums[right] == target:
-                return right
-            if right - left <= 1:
-                break
-            br = left + ((right - left) // 2)
-            if target > nums[br]:
-                left = br
+            # Шаг 3: Значит, отсортирована правая часть
             else:
-                right = br
+                # Шаг 4: Если target находится в диапазоне правой части
+                if nums[mid] < target <= nums[right]:
+                    left = mid + 1
+                else:
+                    right = mid - 1
+
         return -1
 
 
